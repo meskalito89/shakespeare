@@ -24,7 +24,11 @@
 
     <section class="scene-panel">
       <div class="scene-tabs" id="sceneTabs"></div>
-      <button id="addSceneBtn" class="primary">+ Add Scene</button>
+      <div class="scene-panel-actions">
+        <button id="addSceneBtn" class="primary">+ Add Scene</button>
+        <button id="addCellBtn" class="primary">+ Add Cell</button>
+        <button id="toggleSceneSettingsBtn" class="secondary">⚙ Scene Settings</button>
+      </div>
     </section>
 
     <main class="scene-editor">
@@ -41,21 +45,7 @@
       </div>
 
       <div class="scene-body">
-        <div class="scene-summary">
-          <h2 id="activeSceneTitle"></h2>
-          <p id="activeSceneDescription"></p>
-          <div class="scene-summary-actions">
-            <button id="addCellBtn" class="primary">+ Add Cell</button>
-            <button id="toggleSceneSettingsBtn" class="secondary">⚙ Scene Settings</button>
-          </div>
-        </div>
-        <div class="scene-audio-panel">
-          <div class="audio-panel-header">
-            <h3>Scene Audio Files</h3>
-            <p>All audio sources in this scene are listed here for quick access.</p>
-          </div>
-          <div id="audioList" class="audio-list"></div>
-        </div>
+        <!-- scene summary and audio list removed per user request -->
         <div class="cell-grid" id="cellsContainer"></div>
       </div>
     </main>
@@ -68,9 +58,7 @@
           <button class="play-button" title="Play audio">▶</button>
           <button class="toggle-config" title="Show config">⚙</button>
         </div>
-      </div>
-      <div class="cell-info">
-        <textarea class="cell-description" placeholder="Cell description"></textarea>
+        <div class="cell-desc"></div>
       </div>
       <div class="cell-controls">
         <div class="field-group">
@@ -80,6 +68,10 @@
         <div class="field-group file-group">
           <label>Upload Image</label>
           <input class="image-file" type="file" accept="image/*" />
+        </div>
+        <div class="field-group">
+          <label>Cell description</label>
+          <textarea class="cell-description" placeholder="Cell description"></textarea>
         </div>
         <div class="field-group">
           <label>Audio URL</label>
@@ -96,6 +88,10 @@
             <option value="pause">Pause</option>
             <option value="stop">Stop</option>
           </select>
+        </div>
+        <div class="field-group">
+          <label>Border color</label>
+          <input class="border-color" type="color" value="#4f7bff" />
         </div>
         <div class="copy-row">
           <select class="copy-scene"></select>

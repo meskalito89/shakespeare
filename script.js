@@ -7,9 +7,7 @@ const addCellBtn = document.getElementById('addCellBtn');
 const cellsContainer = document.getElementById('cellsContainer');
 const exportBtn = document.getElementById('exportBtn');
 const importInput = document.getElementById('importInput');
-const activeSceneTitle = document.getElementById('activeSceneTitle');
-const activeSceneDescription = document.getElementById('activeSceneDescription');
-const audioList = document.getElementById('audioList');
+// scene summary and audio panel removed from DOM
 const cellTemplate = document.getElementById('cellTemplate');
 const toggleSceneSettingsBtn = document.getElementById('toggleSceneSettingsBtn');
 const sceneSettingsEl = document.querySelector('.scene-settings');
@@ -39,6 +37,10 @@ function createCell() {
     description: '',
     imageSource: '',
     audioSource: '',
+    // optional friendly filenames for uploaded assets
+    audioName: '',
+    imageName: '',
+    borderColor: '#4f7bff',
     secondClickAction: 'fade',
   };
 }
@@ -59,40 +61,7 @@ function updateSceneTabs() {
   });
 }
 
-function appendAudioListItem(index, cell, audio) {
-  if (!audioList) return;
-  const item = document.createElement('div');
-  item.className = 'audio-item';
-
-  const description = document.createElement('span');
-  description.textContent = cell.audioSource
-    ? `Cell ${index}: ${cell.audioSource}`
-    : `Cell ${index}: No audio assigned`;
-
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.textContent = cell.audioSource ? 'Play' : 'No audio';
-  button.disabled = !cell.audioSource;
-
-  if (cell.audioSource) {
-    button.addEventListener('click', () => {
-      if (audio.paused) {
-        audio.play();
-        button.textContent = 'Pause';
-      } else {
-        audio.pause();
-        button.textContent = 'Play';
-      }
-    });
-
-    audio.addEventListener('ended', () => {
-      button.textContent = 'Play';
-    });
-  }
-
-  item.append(description, button);
-  audioList.appendChild(item);
-}
+// audio panel removed — audio is controlled per-cell via play button on the preview
 
 function renderScene() {
   const scene = getActiveScene();
@@ -104,10 +73,7 @@ function renderScene() {
   updateSceneTabs();
   sceneNameInput.value = scene.name;
   sceneDescriptionInput.value = scene.description;
-  activeSceneTitle.textContent = scene.name;
-  activeSceneDescription.textContent = scene.description || 'No description yet.';
   cellsContainer.innerHTML = '';
-  if (audioList) audioList.innerHTML = '';
 
   for (let i = 0; i < 100; i++) {
     const cell = scene.cells[i];
@@ -169,8 +135,6 @@ function renderScene() {
       playButton.textContent = '▶';
     });
 
-    appendAudioListItem(i + 1, cell, audio);
-
     function updateBackground() {
       if (cell.imageSource) {
         node.dataset.image = 'true';
@@ -179,6 +143,11 @@ function renderScene() {
         delete node.dataset.image;
         preview.style.removeProperty('--cell-bg-image');
       }
+      // apply border color variable
+      node.style.setProperty('--cell-border-color', cell.borderColor || 'transparent');
+      // set description overlay
+      const descEl = node.querySelector('.cell-desc');
+      if (descEl) descEl.textContent = cell.description || '';
     }
 
     function syncAudioSrc(source) {
@@ -265,12 +234,15 @@ function renderScene() {
     descriptionInput.value = cell.description;
     descriptionInput.addEventListener('input', () => {
       cell.description = descriptionInput.value;
+      const descEl = node.querySelector('.cell-desc');
+      if (descEl) descEl.textContent = cell.description || '';
     });
 
     imageUrlInput.value = cell.imageSource && !cell.imageSource.startsWith('data:') ? cell.imageSource : '';
     imageUrlInput.addEventListener('change', () => {
       const value = imageUrlInput.value.trim();
       cell.imageSource = value;
+      cell.imageName = '';
       updateBackground();
     });
 
@@ -279,6 +251,7 @@ function renderScene() {
       if (!file) return;
       cell.imageSource = await readFileAsDataURL(file);
       imageUrlInput.value = '';
+      cell.imageName = file.name || '';
       updateBackground();
     });
 
@@ -286,6 +259,7 @@ function renderScene() {
     audioUrlInput.addEventListener('change', () => {
       const value = audioUrlInput.value.trim();
       syncAudioSrc(value);
+      cell.audioName = '';
       playButton.textContent = '▶';
     });
 
@@ -295,8 +269,19 @@ function renderScene() {
       const dataUrl = await readFileAsDataURL(file);
       syncAudioSrc(dataUrl);
       audioUrlInput.value = '';
+      cell.audioName = file.name || '';
       playButton.textContent = '▶';
     });
+
+    // border color control
+    const borderColorInput = node.querySelector('.border-color');
+    if (borderColorInput) {
+      borderColorInput.value = cell.borderColor || '#4f7bff';
+      borderColorInput.addEventListener('input', () => {
+        cell.borderColor = borderColorInput.value;
+        node.style.setProperty('--cell-border-color', cell.borderColor || 'transparent');
+      });
+    }
 
     secondClickSelect.value = cell.secondClickAction;
     secondClickSelect.addEventListener('change', () => {
@@ -377,7 +362,9 @@ function importConfiguration(event) {
               id: cell.id || generateId(),
               description: cell.description || '',
               imageSource: cell.imageSource || '',
+              imageName: cell.imageName || '',
               audioSource: cell.audioSource || '',
+              audioName: cell.audioName || '',
               secondClickAction: ['fade', 'pause', 'stop'].includes(cell.secondClickAction)
                 ? cell.secondClickAction
                 : 'fade',
@@ -439,14 +426,14 @@ sceneNameInput.addEventListener('input', () => {
   if (!scene) return;
   scene.name = sceneNameInput.value.trim() || 'Untitled Scene';
   updateSceneTabs();
-  activeSceneTitle.textContent = scene.name;
+  // title is shown in the scene tabs; no separate scene-summary element
 });
 
 sceneDescriptionInput.addEventListener('input', () => {
   const scene = getActiveScene();
   if (!scene) return;
   scene.description = sceneDescriptionInput.value.trim();
-  activeSceneDescription.textContent = scene.description || 'No description yet.';
+  // scene description stored; no scene-summary display
 });
 
 addSceneBtn.addEventListener('click', addScene);

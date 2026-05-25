@@ -293,7 +293,7 @@ textarea {
   border-radius: 12px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 2px solid var(--cell-border-color, rgba(255, 255, 255, 0.06));
 }
 
 .cell-preview {
@@ -301,6 +301,22 @@ textarea {
   width: 100%;
   aspect-ratio: 1 / 1;
   background: linear-gradient(180deg, rgba(17, 23, 34, 0.9), rgba(13, 17, 24, 0.95)), center / cover no-repeat;
+}
+
+.cell-desc {
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.45);
+  color: #f7fbff;
+  font-size: 0.85rem;
+  line-height: 1.1;
+  max-height: 40%;
+  overflow: auto;
+  word-break: break-word;
 }
 
 .cell-card[data-image] .cell-preview {
