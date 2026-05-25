@@ -9,6 +9,7 @@ const exportBtn = document.getElementById('exportBtn');
 const importInput = document.getElementById('importInput');
 const activeSceneTitle = document.getElementById('activeSceneTitle');
 const activeSceneDescription = document.getElementById('activeSceneDescription');
+const audioList = document.getElementById('audioList');
 const cellTemplate = document.getElementById('cellTemplate');
 
 const state = {

@@ -127,11 +127,54 @@ button:hover,
 }
 
 .scene-settings,
-.scene-summary {
+.scene-summary,
+.scene-audio-panel {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   padding: 1.25rem;
+}
+
+.scene-audio-panel {
+  margin-top: 1rem;
+}
+
+.audio-panel-header h3 {
+  margin: 0;
+}
+
+.audio-panel-header p {
+  margin: 0.5rem 0 0;
+  color: #a0b1c6;
+}
+
+.audio-list {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.audio-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.audio-item span {
+  flex: 1;
+  color: #e6eef8;
+  font-size: 0.95rem;
+  word-break: break-all;
+}
+
+.audio-item button {
+  flex-shrink: 0;
+  padding: 0.65rem 0.9rem;
 }
 
 .field-group {
@@ -162,8 +205,27 @@ textarea {
 
 .cell-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(8, minmax(140px, 1fr));
+  gap: 0.75rem;
+  align-items: start;
+}
+
+@media (max-width: 1280px) {
+  .cell-grid {
+    grid-template-columns: repeat(6, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  .cell-grid {
+    grid-template-columns: repeat(4, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .cell-grid {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
 }
 
 .cell-card {
