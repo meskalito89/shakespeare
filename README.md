@@ -1,57 +1,57 @@
 # Theatre Player
 
-Theatre Player is a small browser-based scene player for arranging visual cells with images, text, and audio. It is useful for theatre cues, performances, rehearsals, installations, or any workflow where you need multiple scenes with clickable media cells.
+Theatre Player - это небольшой браузерный плеер сцен для работы с визуальными клетками, изображениями, текстом и аудио. Он подходит для театральных реплик, спектаклей, репетиций, инсталляций и любых сценариев, где нужны несколько сцен с кликабельными медиа-клетками.
 
-## Features
+## Возможности
 
-- Create multiple scenes.
-- Add up to 100 visual cells per scene.
-- Add an image to each cell from a URL or uploaded file.
-- Add audio to each cell from a URL or uploaded file.
-- Play, pause, stop, or fade audio on a second click.
-- Adjust volume per cell.
-- See audio progress and remaining time.
-- Loop audio per cell.
-- Add cell descriptions.
-- Set a border color for cells.
-- Drag cells to reorder them.
-- Copy cells between scenes.
-- Export and import the full project configuration.
-- Edit the project title and description directly in the header.
+- Создание нескольких сцен.
+- До 100 визуальных клеток в каждой сцене.
+- Добавление изображения в клетку по URL или из загруженного файла.
+- Добавление аудио в клетку по URL или из загруженного файла.
+- Воспроизведение, пауза, остановка или плавное затухание аудио при повторном клике.
+- Настройка громкости для каждой клетки.
+- Отображение прогресса аудио и оставшегося времени.
+- Зацикливание аудио для отдельных клеток.
+- Добавление описаний к клеткам.
+- Настройка цвета рамки клетки.
+- Перетаскивание клеток для изменения порядка.
+- Копирование клеток между сценами.
+- Экспорт и импорт полной конфигурации проекта.
+- Редактирование названия и описания проекта прямо в шапке.
 
-## How To Run
+## Как Запустить
 
-Open `index.html` in a browser.
+Откройте `index.html` в браузере.
 
-No build step, package install, or server is required. The project is plain HTML, CSS, and JavaScript.
+Сборка, установка пакетов и сервер не требуются. Проект написан на обычных HTML, CSS и JavaScript.
 
-## How To Use
+## Как Использовать
 
-1. Edit the project title and description at the top of the page.
-2. Use `+ Add Scene` to create a new scene.
-3. Use `+ Add Cell` or click an empty grid slot to create a cell.
-4. Click the gear icon on a cell to open its settings.
-5. Add an image using `Image URL` or `Upload Image`.
-6. Add audio using `Audio URL` or `Upload Audio`.
-7. Choose what happens on a second click:
+1. Измените название и описание проекта в верхней части страницы.
+2. Нажмите `+ Add Scene`, чтобы создать новую сцену.
+3. Нажмите `+ Add Cell` или кликните по пустой ячейке сетки, чтобы создать клетку.
+4. Нажмите на иконку шестеренки на клетке, чтобы открыть ее настройки.
+5. Добавьте изображение через `Image URL` или `Upload Image`.
+6. Добавьте аудио через `Audio URL` или `Upload Audio`.
+7. Выберите действие при повторном клике:
    - `Fade out`
    - `Pause`
    - `Stop`
-8. Enable `Loop audio` if the audio should repeat.
-9. Use the volume slider and progress bar directly on the cell.
-10. Drag cells around the grid to rearrange them.
-11. Use `Copy cell` to copy a cell into another scene.
+8. Включите `Loop audio`, если аудио должно повторяться.
+9. Используйте ползунок громкости и полосу прогресса прямо на клетке.
+10. Перетаскивайте клетки по сетке, чтобы менять их местами.
+11. Используйте `Copy cell`, чтобы скопировать клетку в другую сцену.
 
-## Saving And Loading
+## Сохранение И Загрузка
 
-Use `Export Configuration` to download a JSON file with the project, scenes, cells, images, audio references, and settings.
+Используйте `Export Configuration`, чтобы скачать JSON-файл с проектом, сценами, клетками, изображениями, ссылками на аудио и настройками.
 
-Use `Import Configuration` to load a previously exported JSON file.
+Используйте `Import Configuration`, чтобы загрузить ранее экспортированный JSON-файл.
 
-Uploaded images and audio are stored inside the exported JSON as data URLs, so large media files can make the configuration file large.
+Загруженные изображения и аудио сохраняются внутри экспортированного JSON как data URL, поэтому большие медиафайлы могут сильно увеличить размер конфигурационного файла.
 
-## Files
+## Файлы
 
-- `index.html` - page structure and templates.
-- `styles.css` - visual design and layout.
-- `script.js` - scene, cell, audio, import, and export logic.
+- `index.html` - структура страницы и шаблоны.
+- `styles.css` - визуальное оформление и раскладка.
+- `script.js` - логика сцен, клеток, аудио, импорта и экспорта.
