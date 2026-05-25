@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Theatre HTML Player</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div>
+        <h1>Theatre Player</h1>
+        <p>Create scenes with visual cells, audio, and copy between scenes.</p>
+      </div>
+      <div class="header-actions">
+        <button id="exportBtn">Export Configuration</button>
+        <label class="file-button">
+          Import Configuration
+          <input id="importInput" type="file" accept="application/json" />
+        </label>
+      </div>
+    </header>
+
+    <section class="scene-panel">
+      <div class="scene-tabs" id="sceneTabs"></div>
+      <button id="addSceneBtn" class="primary">+ Add Scene</button>
+    </section>
+
+    <main class="scene-editor">
+      <div class="scene-settings">
+        <div class="field-group">
+          <label for="sceneName">Scene Name</label>
+          <input id="sceneName" type="text" placeholder="Scene title" />
+        </div>
+        <div class="field-group">
+          <label for="sceneDescription">Scene Description</label>
+          <textarea id="sceneDescription" rows="2" placeholder="Scene description"></textarea>
+        </div>
+        <button id="saveSceneBtn" class="secondary">Save Scene</button>
+      </div>
+
+      <div class="scene-body">
+        <div class="scene-summary">
+          <h2 id="activeSceneTitle"></h2>
+          <p id="activeSceneDescription"></p>
+          <button id="addCellBtn" class="primary">+ Add Cell</button>
+        </div>
+        <div class="cell-grid" id="cellsContainer"></div>
+      </div>
+    </main>
+  </div>
+
+  <template id="cellTemplate">
+    <article class="cell-card" draggable="false">
+      <div class="cell-preview">
+        <div class="cell-overlay">
+          <button class="play-button" title="Play audio">▶</button>
+        </div>
+      </div>
+      <div class="cell-info">
+        <textarea class="cell-description" placeholder="Cell description"></textarea>
+      </div>
+      <div class="cell-controls">
+        <div class="field-group">
+          <label>Image URL</label>
+          <input class="image-url" type="url" placeholder="https://example.com/image.jpg" />
+        </div>
+        <div class="field-group file-group">
+          <label>Upload Image</label>
+          <input class="image-file" type="file" accept="image/*" />
+        </div>
+        <div class="field-group">
+          <label>Audio URL</label>
+          <input class="audio-url" type="url" placeholder="https://example.com/audio.mp3" />
+        </div>
+        <div class="field-group file-group">
+          <label>Upload Audio</label>
+          <input class="audio-file" type="file" accept="audio/*" />
+        </div>
+        <div class="field-group">
+          <label>Second click action</label>
+          <select class="second-click-action">
+            <option value="fade">Fade out</option>
+            <option value="pause">Pause</option>
+            <option value="stop">Stop</option>
+          </select>
+        </div>
+        <div class="copy-row">
+          <select class="copy-scene"></select>
+          <button class="copy-button secondary">Copy cell</button>
+        </div>
+        <button class="remove-cellBtn danger">Remove cell</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>
