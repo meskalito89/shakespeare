@@ -17,6 +17,8 @@ const state = {
   activeSceneId: null,
 };
 
+const audioPlayers = new Map();
+
 function generateId() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
@@ -37,6 +39,7 @@ function createCell() {
     description: '',
     imageSource: '',
     audioSource: '',
+    volume: 1,
     // optional friendly filenames for uploaded assets
     audioName: '',
     imageName: '',
@@ -47,6 +50,74 @@ function createCell() {
 
 function getActiveScene() {
   return state.scenes.find(scene => scene.id === state.activeSceneId);
+}
+
+function normalizeVolume(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 1;
+  return Math.min(1, Math.max(0, parsed));
+}
+
+function updatePlayerButton(player, isPlaying) {
+  if (!player.playButton) return;
+  player.playButton.textContent = isPlaying ? '❚❚' : '▶';
+}
+
+function clearFade(player) {
+  if (!player.fadeTimer) return;
+  clearInterval(player.fadeTimer);
+  player.fadeTimer = null;
+}
+
+function stopPlayer(cellId) {
+  const player = audioPlayers.get(cellId);
+  if (!player) return;
+  clearFade(player);
+  player.audio.pause();
+  player.audio.currentTime = 0;
+  updatePlayerButton(player, false);
+}
+
+function stopAllPlayers() {
+  audioPlayers.forEach((player) => {
+    clearFade(player);
+    player.audio.pause();
+    player.audio.currentTime = 0;
+    updatePlayerButton(player, false);
+  });
+}
+
+function syncPlayerSource(player, source) {
+  if (player.source === source) return;
+  clearFade(player);
+  player.audio.pause();
+  player.audio.currentTime = 0;
+  player.audio.src = source;
+  player.source = source;
+  updatePlayerButton(player, false);
+}
+
+function getAudioPlayer(cell, playButton) {
+  let player = audioPlayers.get(cell.id);
+  if (!player) {
+    player = {
+      audio: document.createElement('audio'),
+      fadeTimer: null,
+      playButton: null,
+      source: '',
+    };
+    player.audio.preload = 'auto';
+    player.audio.addEventListener('ended', () => {
+      updatePlayerButton(player, false);
+    });
+    audioPlayers.set(cell.id, player);
+  }
+
+  player.playButton = playButton;
+  syncPlayerSource(player, cell.audioSource || '');
+  player.audio.volume = normalizeVolume(cell.volume);
+  updatePlayerButton(player, !player.audio.paused);
+  return player;
 }
 
 function updateSceneTabs() {
@@ -117,6 +188,8 @@ function renderScene() {
 
     const preview = node.querySelector('.cell-preview');
     const playButton = node.querySelector('.play-button');
+    const volumeControl = node.querySelector('.cell-volume-control');
+    const volumeInput = node.querySelector('.cell-volume');
     const toggleConfigBtn = node.querySelector('.toggle-config');
     const descriptionInput = node.querySelector('.cell-description');
     const imageUrlInput = node.querySelector('.image-url');
@@ -128,12 +201,9 @@ function renderScene() {
     const copyButton = node.querySelector('.copy-button');
     const removeCellBtn = node.querySelector('.remove-cellBtn');
 
-    const audio = document.createElement('audio');
-    audio.preload = 'auto';
-    audio.src = cell.audioSource || '';
-    audio.addEventListener('ended', () => {
-      playButton.textContent = '▶';
-    });
+    cell.volume = normalizeVolume(cell.volume);
+    const player = getAudioPlayer(cell, playButton);
+    const audio = player.audio;
 
     function updateBackground() {
       if (cell.imageSource) {
@@ -151,8 +221,8 @@ function renderScene() {
     }
 
     function syncAudioSrc(source) {
-      audio.src = source;
       cell.audioSource = source;
+      syncPlayerSource(player, source);
     }
 
     function handlePlayClick(event) {
@@ -162,9 +232,11 @@ function renderScene() {
         return;
       }
       if (audio.paused) {
-        audio.volume = 1;
-        audio.play();
-        playButton.textContent = '❚❚';
+        clearFade(player);
+        audio.volume = cell.volume;
+        audio.play()
+          .then(() => updatePlayerButton(player, true))
+          .catch(() => updatePlayerButton(player, false));
       } else {
         applySecondClickAction();
       }
@@ -174,12 +246,11 @@ function renderScene() {
       if (!audio.src) return;
       const action = cell.secondClickAction;
       if (action === 'pause') {
+        clearFade(player);
         audio.pause();
-        playButton.textContent = '▶';
+        updatePlayerButton(player, false);
       } else if (action === 'stop') {
-        audio.pause();
-        audio.currentTime = 0;
-        playButton.textContent = '▶';
+        stopPlayer(cell.id);
       } else {
         fadeOutAudio();
       }
@@ -187,27 +258,63 @@ function renderScene() {
 
     function fadeOutAudio() {
       if (audio.paused) return;
+      clearFade(player);
       const fadeDuration = 700;
       const steps = 14;
       const stepTime = fadeDuration / steps;
       let currentStep = 0;
       const volumeStart = audio.volume;
-      const fade = setInterval(() => {
+      player.fadeTimer = setInterval(() => {
         currentStep += 1;
         const nextVolume = Math.max(0, volumeStart * (1 - currentStep / steps));
         audio.volume = nextVolume;
         if (currentStep >= steps) {
-          clearInterval(fade);
+          clearFade(player);
           audio.pause();
           audio.currentTime = 0;
-          audio.volume = 1;
-          playButton.textContent = '▶';
+          audio.volume = cell.volume;
+          updatePlayerButton(player, false);
         }
       }, stepTime);
     }
 
+    if (volumeControl && volumeInput) {
+      volumeInput.value = Math.round(cell.volume * 100).toString();
+      const blockCellDrag = (ev) => {
+        ev.stopPropagation();
+        node.draggable = false;
+      };
+      const restoreCellDrag = () => {
+        node.draggable = true;
+      };
+      volumeControl.addEventListener('pointerenter', () => {
+        node.draggable = false;
+      });
+      volumeControl.addEventListener('pointerleave', restoreCellDrag);
+      volumeControl.addEventListener('focusin', () => {
+        node.draggable = false;
+      });
+      volumeControl.addEventListener('focusout', restoreCellDrag);
+      volumeControl.addEventListener('pointerdown', blockCellDrag);
+      volumeControl.addEventListener('mousedown', blockCellDrag);
+      volumeControl.addEventListener('touchstart', blockCellDrag);
+      volumeControl.addEventListener('pointerup', restoreCellDrag);
+      volumeControl.addEventListener('pointercancel', restoreCellDrag);
+      volumeControl.addEventListener('click', (ev) => ev.stopPropagation());
+      const updateVolume = () => {
+        cell.volume = normalizeVolume(Number(volumeInput.value) / 100);
+        audio.volume = cell.volume;
+      };
+      volumeInput.addEventListener('input', updateVolume);
+      volumeInput.addEventListener('change', updateVolume);
+    }
+
     // drag handlers
     node.addEventListener('dragstart', (ev) => {
+      if (ev.target.closest('.cell-volume-control')) {
+        ev.preventDefault();
+        return;
+      }
       ev.dataTransfer.setData('text/plain', i.toString());
     });
     node.addEventListener('dragover', (ev) => ev.preventDefault());
@@ -311,6 +418,8 @@ function renderScene() {
     });
 
     removeCellBtn.addEventListener('click', () => {
+      stopPlayer(cell.id);
+      audioPlayers.delete(cell.id);
       scene.cells[i] = null;
       renderScene();
     });
@@ -348,6 +457,8 @@ function importConfiguration(event) {
   const reader = new FileReader();
   reader.onload = () => {
     try {
+      stopAllPlayers();
+      audioPlayers.clear();
       const importedScenes = JSON.parse(reader.result);
       if (!Array.isArray(importedScenes)) {
         throw new Error('Invalid configuration file.');
@@ -365,6 +476,8 @@ function importConfiguration(event) {
               imageName: cell.imageName || '',
               audioSource: cell.audioSource || '',
               audioName: cell.audioName || '',
+              volume: normalizeVolume(cell.volume),
+              borderColor: cell.borderColor || '#4f7bff',
               secondClickAction: ['fade', 'pause', 'stop'].includes(cell.secondClickAction)
                 ? cell.secondClickAction
                 : 'fade',
