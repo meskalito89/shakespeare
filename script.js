@@ -7,12 +7,18 @@ const addCellBtn = document.getElementById('addCellBtn');
 const cellsContainer = document.getElementById('cellsContainer');
 const exportBtn = document.getElementById('exportBtn');
 const importInput = document.getElementById('importInput');
+const projectTitleInput = document.getElementById('projectTitle');
+const projectDescriptionInput = document.getElementById('projectDescription');
 // scene summary and audio panel removed from DOM
 const cellTemplate = document.getElementById('cellTemplate');
 const toggleSceneSettingsBtn = document.getElementById('toggleSceneSettingsBtn');
 const sceneSettingsEl = document.querySelector('.scene-settings');
 
 const state = {
+  project: {
+    title: 'Theatre Player',
+    description: 'Create scenes with visual cells, audio, and copy between scenes.',
+  },
   scenes: [],
   activeSceneId: null,
 };
@@ -45,6 +51,7 @@ function createCell() {
     imageName: '',
     borderColor: '#4f7bff',
     secondClickAction: 'fade',
+    loopAudio: false,
   };
 }
 
@@ -56,6 +63,29 @@ function normalizeVolume(value) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return 1;
   return Math.min(1, Math.max(0, parsed));
+}
+
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60).toString().padStart(2, '0');
+  return `${minutes}:${remainingSeconds}`;
+}
+
+function updateAudioProgress(player) {
+  const audio = player.audio;
+  const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+  const current = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+
+  if (player.progressInput) {
+    player.progressInput.max = duration > 0 ? duration.toString() : '100';
+    player.progressInput.value = duration > 0 ? current.toString() : '0';
+  }
+
+  if (player.timeLabel) {
+    const remaining = Math.max(0, duration - current);
+    player.timeLabel.textContent = `${formatTime(current)} / -${formatTime(remaining)}`;
+  }
 }
 
 function updatePlayerButton(player, isPlaying) {
@@ -104,20 +134,31 @@ function getAudioPlayer(cell, playButton) {
       audio: document.createElement('audio'),
       fadeTimer: null,
       playButton: null,
+      progressInput: null,
+      timeLabel: null,
       source: '',
     };
     player.audio.preload = 'auto';
     player.audio.addEventListener('ended', () => {
       updatePlayerButton(player, false);
+      updateAudioProgress(player);
     });
+    player.audio.addEventListener('loadedmetadata', () => updateAudioProgress(player));
+    player.audio.addEventListener('timeupdate', () => updateAudioProgress(player));
     audioPlayers.set(cell.id, player);
   }
 
   player.playButton = playButton;
   syncPlayerSource(player, cell.audioSource || '');
   player.audio.volume = normalizeVolume(cell.volume);
+  player.audio.loop = Boolean(cell.loopAudio);
   updatePlayerButton(player, !player.audio.paused);
   return player;
+}
+
+function updateProjectFields() {
+  if (projectTitleInput) projectTitleInput.value = state.project.title;
+  if (projectDescriptionInput) projectDescriptionInput.value = state.project.description;
 }
 
 function updateSceneTabs() {
@@ -197,13 +238,36 @@ function renderScene() {
     const audioUrlInput = node.querySelector('.audio-url');
     const audioFileInput = node.querySelector('.audio-file');
     const secondClickSelect = node.querySelector('.second-click-action');
+    const loopAudioInput = node.querySelector('.loop-audio');
     const copySceneSelect = node.querySelector('.copy-scene');
     const copyButton = node.querySelector('.copy-button');
     const removeCellBtn = node.querySelector('.remove-cellBtn');
+    const progressInput = document.createElement('input');
+    const progressLabel = document.createElement('span');
 
     cell.volume = normalizeVolume(cell.volume);
     const player = getAudioPlayer(cell, playButton);
     const audio = player.audio;
+    audio.loop = Boolean(cell.loopAudio);
+
+    progressInput.type = 'range';
+    progressInput.className = 'audio-progress';
+    progressInput.min = '0';
+    progressInput.max = '100';
+    progressInput.value = '0';
+    progressInput.step = '0.01';
+    progressInput.setAttribute('aria-label', 'Audio progress');
+    progressLabel.className = 'audio-progress-time';
+    progressLabel.textContent = '0:00 / -0:00';
+
+    const progressWrap = document.createElement('label');
+    progressWrap.className = 'audio-progress-control';
+    progressWrap.draggable = false;
+    progressWrap.append(progressInput, progressLabel);
+    preview.appendChild(progressWrap);
+    player.progressInput = progressInput;
+    player.timeLabel = progressLabel;
+    updateAudioProgress(player);
 
     function updateBackground() {
       if (cell.imageSource) {
@@ -309,6 +373,23 @@ function renderScene() {
       volumeInput.addEventListener('change', updateVolume);
     }
 
+    progressWrap.addEventListener('click', (ev) => ev.stopPropagation());
+    progressWrap.addEventListener('pointerdown', (ev) => {
+      ev.stopPropagation();
+      node.draggable = false;
+    });
+    progressWrap.addEventListener('pointerup', () => {
+      node.draggable = true;
+    });
+    progressWrap.addEventListener('pointercancel', () => {
+      node.draggable = true;
+    });
+    progressInput.addEventListener('input', () => {
+      if (!Number.isFinite(audio.duration)) return;
+      audio.currentTime = Number(progressInput.value);
+      updateAudioProgress(player);
+    });
+
     // drag handlers
     node.addEventListener('dragstart', (ev) => {
       if (ev.target.closest('.cell-volume-control')) {
@@ -395,6 +476,14 @@ function renderScene() {
       cell.secondClickAction = secondClickSelect.value;
     });
 
+    if (loopAudioInput) {
+      loopAudioInput.checked = Boolean(cell.loopAudio);
+      loopAudioInput.addEventListener('change', () => {
+        cell.loopAudio = loopAudioInput.checked;
+        audio.loop = cell.loopAudio;
+      });
+    }
+
     // populate copy targets
     copySceneSelect.innerHTML = '';
     state.scenes.forEach(sceneItem => {
@@ -439,7 +528,10 @@ function readFileAsDataURL(file) {
 }
 
 function exportConfiguration() {
-  const payload = JSON.stringify(state.scenes, null, 2);
+  const payload = JSON.stringify({
+    project: state.project,
+    scenes: state.scenes,
+  }, null, 2);
   const blob = new Blob([payload], { type: 'application/json;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
@@ -459,11 +551,22 @@ function importConfiguration(event) {
     try {
       stopAllPlayers();
       audioPlayers.clear();
-      const importedScenes = JSON.parse(reader.result);
-      if (!Array.isArray(importedScenes)) {
+      const importedConfig = JSON.parse(reader.result);
+      const importedProject = Array.isArray(importedConfig)
+        ? {}
+        : (importedConfig.project || {});
+      const scenesPayload = Array.isArray(importedConfig)
+        ? importedConfig
+        : importedConfig.scenes;
+      if (!Array.isArray(scenesPayload)) {
         throw new Error('Invalid configuration file.');
       }
-      state.scenes = importedScenes.map(scene => {
+
+      state.project = {
+        title: importedProject.title || 'Theatre Player',
+        description: importedProject.description || 'Create scenes with visual cells, audio, and copy between scenes.',
+      };
+      state.scenes = scenesPayload.map(scene => {
         const cellsArr = new Array(100).fill(null);
         if (Array.isArray(scene.cells)) {
           for (let i = 0; i < Math.min(100, scene.cells.length); i++) {
@@ -481,6 +584,7 @@ function importConfiguration(event) {
               secondClickAction: ['fade', 'pause', 'stop'].includes(cell.secondClickAction)
                 ? cell.secondClickAction
                 : 'fade',
+              loopAudio: Boolean(cell.loopAudio),
             };
           }
         }
@@ -492,6 +596,7 @@ function importConfiguration(event) {
         };
       });
       state.activeSceneId = state.scenes[0]?.id || null;
+      updateProjectFields();
       renderScene();
     } catch (error) {
       alert('Unable to import configuration: ' + error.message);
@@ -549,6 +654,18 @@ sceneDescriptionInput.addEventListener('input', () => {
   // scene description stored; no scene-summary display
 });
 
+if (projectTitleInput) {
+  projectTitleInput.addEventListener('input', () => {
+    state.project.title = projectTitleInput.value.trim() || 'Theatre Player';
+  });
+}
+
+if (projectDescriptionInput) {
+  projectDescriptionInput.addEventListener('input', () => {
+    state.project.description = projectDescriptionInput.value.trim();
+  });
+}
+
 addSceneBtn.addEventListener('click', addScene);
 saveSceneBtn.addEventListener('click', saveSceneDetails);
 addCellBtn.addEventListener('click', () => addCell());
@@ -563,6 +680,7 @@ if (toggleSceneSettingsBtn && sceneSettingsEl) {
 }
 
 window.addEventListener('load', () => {
+  updateProjectFields();
   if (state.scenes.length === 0) addScene();
   renderScene();
 });

@@ -9,9 +9,9 @@
 <body>
   <div class="app-shell">
     <header class="app-header">
-      <div>
-        <h1>Theatre Player</h1>
-        <p>Create scenes with visual cells, audio, and copy between scenes.</p>
+      <div class="project-fields">
+        <input id="projectTitle" class="project-title-input" type="text" value="Theatre Player" aria-label="Project title" />
+        <textarea id="projectDescription" class="project-description-input" rows="1" aria-label="Project description">Create scenes with visual cells, audio, and copy between scenes.</textarea>
       </div>
       <div class="header-actions">
         <button id="exportBtn">Export Configuration</button>
@@ -93,6 +93,10 @@
             <option value="stop">Stop</option>
           </select>
         </div>
+        <label class="checkbox-field">
+          <input class="loop-audio" type="checkbox" />
+          <span>Loop audio</span>
+        </label>
         <div class="field-group">
           <label>Border color</label>
           <input class="border-color" type="color" value="#4f7bff" />

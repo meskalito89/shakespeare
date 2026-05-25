@@ -38,14 +38,42 @@ select {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.app-header h1 {
-  margin: 0 0 0.25rem;
-  font-size: clamp(1.75rem, 2vw, 2.25rem);
+.project-fields {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+  flex: 1;
 }
 
-.app-header p {
-  margin: 0;
+.project-title-input,
+.project-description-input {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  padding: 0.15rem 0.25rem;
+}
+
+.project-title-input {
+  color: #f5f9ff;
+  font-size: clamp(1.75rem, 2vw, 2.25rem);
+  font-weight: 800;
+  line-height: 1.12;
+}
+
+.project-description-input {
+  min-height: 1.7rem;
+  resize: vertical;
+  overflow: hidden;
   color: #adb9cd;
+  line-height: 1.35;
+}
+
+.project-title-input:focus,
+.project-description-input:focus {
+  border-color: rgba(79, 123, 255, 0.65);
+  background: rgba(255, 255, 255, 0.04);
+  outline: none;
 }
 
 .header-actions {
@@ -300,7 +328,10 @@ textarea {
   position: relative;
   width: 100%;
   aspect-ratio: 1 / 1;
-  background: linear-gradient(180deg, rgba(17, 23, 34, 0.9), rgba(13, 17, 24, 0.95)), center / cover no-repeat;
+  background: linear-gradient(180deg, rgba(17, 23, 34, 0.9), rgba(13, 17, 24, 0.95));
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .cell-volume-control {
@@ -357,6 +388,9 @@ textarea {
 
 .cell-card[data-image] .cell-preview {
   background-image: var(--cell-bg-image), linear-gradient(180deg, rgba(17, 23, 34, 0.5), rgba(13, 17, 24, 0.9));
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
+  background-size: cover, cover;
 }
 
 .cell-overlay {
@@ -375,6 +409,59 @@ textarea {
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
   font-size: 1.25rem;
+}
+
+.audio-progress-control {
+  position: absolute;
+  left: 0.5rem;
+  right: 3.1rem;
+  bottom: 0.5rem;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.45rem;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.25rem 0.45rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.52);
+  color: #f7fbff;
+  user-select: none;
+}
+
+.audio-progress {
+  min-width: 0;
+  height: 1.2rem;
+  padding: 0;
+  accent-color: #4f7bff;
+}
+
+.audio-progress-time {
+  min-width: 4.9rem;
+  font-size: 0.72rem;
+  line-height: 1;
+  color: #dce8f8;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cell-desc:not(:empty) {
+  bottom: 2.9rem;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  color: #d9e4f2;
+}
+
+.checkbox-field input {
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  accent-color: #4f7bff;
 }
 
 /* Hide description and controls by default */
