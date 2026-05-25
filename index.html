@@ -44,7 +44,10 @@
         <div class="scene-summary">
           <h2 id="activeSceneTitle"></h2>
           <p id="activeSceneDescription"></p>
-          <button id="addCellBtn" class="primary">+ Add Cell</button>
+          <div class="scene-summary-actions">
+            <button id="addCellBtn" class="primary">+ Add Cell</button>
+            <button id="toggleSceneSettingsBtn" class="secondary">⚙ Scene Settings</button>
+          </div>
         </div>
         <div class="scene-audio-panel">
           <div class="audio-panel-header">
@@ -63,6 +66,7 @@
       <div class="cell-preview">
         <div class="cell-overlay">
           <button class="play-button" title="Play audio">▶</button>
+          <button class="toggle-config" title="Show config">⚙</button>
         </div>
       </div>
       <div class="cell-info">

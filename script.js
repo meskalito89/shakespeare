@@ -11,6 +11,8 @@ const activeSceneTitle = document.getElementById('activeSceneTitle');
 const activeSceneDescription = document.getElementById('activeSceneDescription');
 const audioList = document.getElementById('audioList');
 const cellTemplate = document.getElementById('cellTemplate');
+const toggleSceneSettingsBtn = document.getElementById('toggleSceneSettingsBtn');
+const sceneSettingsEl = document.querySelector('.scene-settings');
 
 const state = {
   scenes: [],
@@ -42,6 +44,41 @@ function createCell() {
 
 function getActiveScene() {
   return state.scenes.find(scene => scene.id === state.activeSceneId);
+}
+
+function appendAudioListItem(index, cell, audio) {
+  if (!audioList) return;
+  const item = document.createElement('div');
+  item.className = 'audio-item';
+
+  const description = document.createElement('span');
+  description.textContent = cell.audioSource
+    ? `Cell ${index}: ${cell.audioSource}`
+    : `Cell ${index}: No audio assigned`;
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = cell.audioSource ? 'Play' : 'No audio';
+  button.disabled = !cell.audioSource;
+
+  if (cell.audioSource) {
+    button.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play();
+        button.textContent = 'Pause';
+      } else {
+        audio.pause();
+        button.textContent = 'Play';
+      }
+    });
+
+    audio.addEventListener('ended', () => {
+      button.textContent = 'Play';
+    });
+  }
+
+  item.append(description, button);
+  audioList.appendChild(item);
 }
 
 function saveSceneDetails() {
@@ -95,11 +132,19 @@ function renderScene() {
   activeSceneTitle.textContent = scene.name;
   activeSceneDescription.textContent = scene.description || 'No description yet.';
   cellsContainer.innerHTML = '';
+  if (audioList) {
+    audioList.innerHTML = scene.cells.length === 0
+      ? '<div class="audio-item">No cells yet in this scene.</div>'
+      : '';
+  }
 
-  scene.cells.forEach(cell => {
+  scene.cells.forEach((cell, index) => {
     const node = cellTemplate.content.firstElementChild.cloneNode(true);
+    // hide controls by default (CSS handles display)
+    node.classList.remove('show-controls');
     const preview = node.querySelector('.cell-preview');
     const playButton = node.querySelector('.play-button');
+    const toggleConfigBtn = node.querySelector('.toggle-config');
     const descriptionInput = node.querySelector('.cell-description');
     const imageUrlInput = node.querySelector('.image-url');
     const imageFileInput = node.querySelector('.image-file');
@@ -116,6 +161,8 @@ function renderScene() {
     audio.addEventListener('ended', () => {
       playButton.textContent = '▶';
     });
+
+    appendAudioListItem(index + 1, cell, audio);
 
     function updateBackground() {
       if (cell.imageSource) {
@@ -185,6 +232,12 @@ function renderScene() {
 
     preview.addEventListener('click', handlePlayClick);
     playButton.addEventListener('click', handlePlayClick);
+    if (toggleConfigBtn) {
+      toggleConfigBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        node.classList.toggle('show-controls');
+      });
+    }
 
     descriptionInput.value = cell.description;
     descriptionInput.addEventListener('input', () => {
@@ -339,6 +392,13 @@ saveSceneBtn.addEventListener('click', saveSceneDetails);
 addCellBtn.addEventListener('click', addCell);
 exportBtn.addEventListener('click', exportConfiguration);
 importInput.addEventListener('change', importConfiguration);
+
+// Scene settings toggle
+if (toggleSceneSettingsBtn && sceneSettingsEl) {
+  toggleSceneSettingsBtn.addEventListener('click', () => {
+    sceneSettingsEl.classList.toggle('visible');
+  });
+}
 
 window.addEventListener('load', () => {
   if (state.scenes.length === 0) {
