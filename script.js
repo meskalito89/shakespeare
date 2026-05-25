@@ -28,7 +28,8 @@ function createScene(name = 'Untitled Scene', description = '') {
     id: generateId(),
     name,
     description,
-    cells: [],
+    // fixed 10x10 board = 100 slots
+    cells: new Array(100).fill(null),
   };
 }
 
@@ -44,6 +45,18 @@ function createCell() {
 
 function getActiveScene() {
   return state.scenes.find(scene => scene.id === state.activeSceneId);
+}
+
+function updateSceneTabs() {
+  sceneTabs.innerHTML = '';
+  state.scenes.forEach(scene => {
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.className = 'scene-tab' + (scene.id === state.activeSceneId ? ' active' : '');
+    tab.textContent = scene.name;
+    tab.addEventListener('click', () => setActiveScene(scene.id));
+    sceneTabs.appendChild(tab);
+  });
 }
 
 function appendAudioListItem(index, cell, audio) {
@@ -81,44 +94,6 @@ function appendAudioListItem(index, cell, audio) {
   audioList.appendChild(item);
 }
 
-function saveSceneDetails() {
-  const scene = getActiveScene();
-  if (!scene) return;
-  scene.name = sceneNameInput.value.trim() || 'Untitled Scene';
-  scene.description = sceneDescriptionInput.value.trim();
-  renderScene();
-}
-
-function setActiveScene(sceneId) {
-  state.activeSceneId = sceneId;
-  renderScene();
-}
-
-function addScene() {
-  const scene = createScene(`Scene ${state.scenes.length + 1}`, 'Describe this scene.');
-  state.scenes.push(scene);
-  setActiveScene(scene.id);
-}
-
-function addCell() {
-  const scene = getActiveScene();
-  if (!scene) return;
-  scene.cells.push(createCell());
-  renderScene();
-}
-
-function updateSceneTabs() {
-  sceneTabs.innerHTML = '';
-  state.scenes.forEach(scene => {
-    const tab = document.createElement('button');
-    tab.type = 'button';
-    tab.className = 'scene-tab' + (scene.id === state.activeSceneId ? ' active' : '');
-    tab.textContent = scene.name;
-    tab.addEventListener('click', () => setActiveScene(scene.id));
-    sceneTabs.appendChild(tab);
-  });
-}
-
 function renderScene() {
   const scene = getActiveScene();
   if (!scene) {
@@ -132,16 +107,48 @@ function renderScene() {
   activeSceneTitle.textContent = scene.name;
   activeSceneDescription.textContent = scene.description || 'No description yet.';
   cellsContainer.innerHTML = '';
-  if (audioList) {
-    audioList.innerHTML = scene.cells.length === 0
-      ? '<div class="audio-item">No cells yet in this scene.</div>'
-      : '';
-  }
+  if (audioList) audioList.innerHTML = '';
 
-  scene.cells.forEach((cell, index) => {
+  for (let i = 0; i < 100; i++) {
+    const cell = scene.cells[i];
+    if (!cell) {
+      const slot = document.createElement('div');
+      slot.className = 'cell-empty';
+      slot.dataset.index = i;
+      slot.draggable = true;
+
+      const addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'primary';
+      addBtn.textContent = '+';
+      addBtn.title = `Add cell at ${i}`;
+      addBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        addCell(i);
+      });
+
+      slot.addEventListener('dragover', (ev) => ev.preventDefault());
+      slot.addEventListener('drop', (ev) => {
+        ev.preventDefault();
+        const src = parseInt(ev.dataTransfer.getData('text/plain'), 10);
+        const dest = i;
+        if (isNaN(src)) return;
+        const moving = scene.cells[src];
+        if (!moving) return;
+        scene.cells[src] = null;
+        scene.cells[dest] = moving;
+        renderScene();
+      });
+
+      slot.appendChild(addBtn);
+      cellsContainer.appendChild(slot);
+      continue;
+    }
+
     const node = cellTemplate.content.firstElementChild.cloneNode(true);
-    // hide controls by default (CSS handles display)
-    node.classList.remove('show-controls');
+    node.dataset.index = i;
+    node.draggable = true;
+
     const preview = node.querySelector('.cell-preview');
     const playButton = node.querySelector('.play-button');
     const toggleConfigBtn = node.querySelector('.toggle-config');
@@ -157,12 +164,12 @@ function renderScene() {
 
     const audio = document.createElement('audio');
     audio.preload = 'auto';
-    audio.src = cell.audioSource;
+    audio.src = cell.audioSource || '';
     audio.addEventListener('ended', () => {
       playButton.textContent = '▶';
     });
 
-    appendAudioListItem(index + 1, cell, audio);
+    appendAudioListItem(i + 1, cell, audio);
 
     function updateBackground() {
       if (cell.imageSource) {
@@ -230,6 +237,22 @@ function renderScene() {
       }, stepTime);
     }
 
+    // drag handlers
+    node.addEventListener('dragstart', (ev) => {
+      ev.dataTransfer.setData('text/plain', i.toString());
+    });
+    node.addEventListener('dragover', (ev) => ev.preventDefault());
+    node.addEventListener('drop', (ev) => {
+      ev.preventDefault();
+      const src = parseInt(ev.dataTransfer.getData('text/plain'), 10);
+      const dest = i;
+      if (isNaN(src) || src === dest) return;
+      const moving = scene.cells[src];
+      scene.cells[src] = null;
+      scene.cells[dest] = moving;
+      renderScene();
+    });
+
     preview.addEventListener('click', handlePlayClick);
     playButton.addEventListener('click', handlePlayClick);
     if (toggleConfigBtn) {
@@ -242,7 +265,6 @@ function renderScene() {
     descriptionInput.value = cell.description;
     descriptionInput.addEventListener('input', () => {
       cell.description = descriptionInput.value;
-      renderScene();
     });
 
     imageUrlInput.value = cell.imageSource && !cell.imageSource.startsWith('data:') ? cell.imageSource : '';
@@ -281,6 +303,8 @@ function renderScene() {
       cell.secondClickAction = secondClickSelect.value;
     });
 
+    // populate copy targets
+    copySceneSelect.innerHTML = '';
     state.scenes.forEach(sceneItem => {
       if (sceneItem.id === scene.id) return;
       const option = document.createElement('option');
@@ -294,24 +318,21 @@ function renderScene() {
       if (!destinationId) return;
       const destinationScene = state.scenes.find(item => item.id === destinationId);
       if (!destinationScene) return;
-      destinationScene.cells.push({
-        ...JSON.parse(JSON.stringify(cell)),
-        id: generateId(),
-      });
+      const destIndex = destinationScene.cells.findIndex(c => c === null);
+      if (destIndex === -1) return;
+      destinationScene.cells[destIndex] = JSON.parse(JSON.stringify(cell));
+      destinationScene.cells[destIndex].id = generateId();
       renderScene();
     });
 
     removeCellBtn.addEventListener('click', () => {
-      const index = scene.cells.findIndex(item => item.id === cell.id);
-      if (index !== -1) {
-        scene.cells.splice(index, 1);
-        renderScene();
-      }
+      scene.cells[i] = null;
+      renderScene();
     });
 
     updateBackground();
     cellsContainer.appendChild(node);
-  });
+  }
 }
 
 function readFileAsDataURL(file) {
@@ -346,12 +367,13 @@ function importConfiguration(event) {
       if (!Array.isArray(importedScenes)) {
         throw new Error('Invalid configuration file.');
       }
-      state.scenes = importedScenes.map(scene => ({
-        id: scene.id || generateId(),
-        name: scene.name || 'Scene',
-        description: scene.description || '',
-        cells: Array.isArray(scene.cells)
-          ? scene.cells.map(cell => ({
+      state.scenes = importedScenes.map(scene => {
+        const cellsArr = new Array(100).fill(null);
+        if (Array.isArray(scene.cells)) {
+          for (let i = 0; i < Math.min(100, scene.cells.length); i++) {
+            const cell = scene.cells[i];
+            if (!cell) continue;
+            cellsArr[i] = {
               id: cell.id || generateId(),
               description: cell.description || '',
               imageSource: cell.imageSource || '',
@@ -359,9 +381,16 @@ function importConfiguration(event) {
               secondClickAction: ['fade', 'pause', 'stop'].includes(cell.secondClickAction)
                 ? cell.secondClickAction
                 : 'fade',
-            }))
-          : [],
-      }));
+            };
+          }
+        }
+        return {
+          id: scene.id || generateId(),
+          name: scene.name || 'Scene',
+          description: scene.description || '',
+          cells: cellsArr,
+        };
+      });
       state.activeSceneId = state.scenes[0]?.id || null;
       renderScene();
     } catch (error) {
@@ -370,6 +399,39 @@ function importConfiguration(event) {
   };
   reader.readAsText(file);
   importInput.value = '';
+}
+
+function addScene() {
+  const scene = createScene(`Scene ${state.scenes.length + 1}`, 'Describe this scene.');
+  state.scenes.push(scene);
+  setActiveScene(scene.id);
+}
+
+function addCell(index = null) {
+  const scene = getActiveScene();
+  if (!scene) return;
+  if (index === null) {
+    const firstEmpty = scene.cells.findIndex(c => c === null);
+    if (firstEmpty === -1) return;
+    scene.cells[firstEmpty] = createCell();
+  } else {
+    if (index < 0 || index >= 100) return;
+    scene.cells[index] = createCell();
+  }
+  renderScene();
+}
+
+function saveSceneDetails() {
+  const scene = getActiveScene();
+  if (!scene) return;
+  scene.name = sceneNameInput.value.trim() || 'Untitled Scene';
+  scene.description = sceneDescriptionInput.value.trim();
+  renderScene();
+}
+
+function setActiveScene(sceneId) {
+  state.activeSceneId = sceneId;
+  renderScene();
 }
 
 sceneNameInput.addEventListener('input', () => {
@@ -389,7 +451,7 @@ sceneDescriptionInput.addEventListener('input', () => {
 
 addSceneBtn.addEventListener('click', addScene);
 saveSceneBtn.addEventListener('click', saveSceneDetails);
-addCellBtn.addEventListener('click', addCell);
+addCellBtn.addEventListener('click', () => addCell());
 exportBtn.addEventListener('click', exportConfiguration);
 importInput.addEventListener('change', importConfiguration);
 
@@ -401,9 +463,6 @@ if (toggleSceneSettingsBtn && sceneSettingsEl) {
 }
 
 window.addEventListener('load', () => {
-  if (state.scenes.length === 0) {
-    addScene();
-  } else {
-    renderScene();
-  }
+  if (state.scenes.length === 0) addScene();
+  renderScene();
 });
