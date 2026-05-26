@@ -441,9 +441,9 @@ textarea {
 
 .cell-volume-control {
   position: absolute;
-  top: 48px;
-  right: 8px;
-  bottom: 8px;
+  top: 8px;
+  right: 52px;
+  bottom: 3.95rem;
   z-index: 2;
   display: grid;
   grid-template-rows: auto 1fr;
@@ -519,14 +519,14 @@ textarea {
 .audio-progress-control {
   position: absolute;
   left: 0.5rem;
-  right: 3.1rem;
+  right: 0.5rem;
   bottom: 0.5rem;
   z-index: 3;
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.45rem;
-  align-items: center;
-  min-height: 2rem;
+  grid-template-columns: 1fr;
+  gap: 0.25rem;
+  align-items: stretch;
+  min-height: 2.7rem;
   padding: 0.25rem 0.45rem;
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.52);
@@ -535,6 +535,8 @@ textarea {
 }
 
 .audio-progress {
+  order: 2;
+  width: 100%;
   min-width: 0;
   height: 1.2rem;
   padding: 0;
@@ -542,16 +544,17 @@ textarea {
 }
 
 .audio-progress-time {
-  min-width: 4.9rem;
+  order: 1;
+  min-width: 0;
   font-size: 0.72rem;
   line-height: 1;
   color: #dce8f8;
-  text-align: right;
+  text-align: left;
   white-space: nowrap;
 }
 
 .cell-desc:not(:empty) {
-  bottom: 2.9rem;
+  bottom: 3.65rem;
 }
 
 .checkbox-field {
