@@ -192,7 +192,6 @@ function playCellAudio(cell) {
   const player = audioPlayers.get(cell.id) || getAudioPlayer(cell, null);
   clearFade(player);
   syncPlayerSource(player, cell.audioSource);
-  player.audio.currentTime = 0;
   player.audio.volume = cell.volume;
   player.audio.loop = Boolean(cell.loopAudio);
   player.audio.play()
@@ -200,7 +199,7 @@ function playCellAudio(cell) {
     .catch(() => updatePlayerButton(player, false));
 }
 
-function applyCellSecondClickAction(cell) {
+function applyCellSecondClickAction(cell, options = {}) {
   if (!cell?.audioSource) return;
   const player = audioPlayers.get(cell.id);
   if (!player || player.audio.paused) return;
@@ -210,7 +209,13 @@ function applyCellSecondClickAction(cell) {
     player.audio.pause();
     updatePlayerButton(player, false);
   } else if (cell.secondClickAction === 'stop') {
-    stopPlayer(cell.id);
+    if (options.keepStopPosition) {
+      clearFade(player);
+      player.audio.pause();
+      updatePlayerButton(player, false);
+    } else {
+      stopPlayer(cell.id);
+    }
   } else {
     fadeOutPlayer(player, cell);
   }
@@ -239,7 +244,7 @@ function playBoardLine(lineType, index) {
 
   lineCells.forEach((cell) => {
     if (hasPlayingAudio) {
-      applyCellSecondClickAction(cell);
+      applyCellSecondClickAction(cell, { keepStopPosition: true });
     } else {
       playCellAudio(cell);
     }
