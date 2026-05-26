@@ -425,19 +425,26 @@ textarea {
 }
 
 .cell-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
   background: rgba(255, 255, 255, 0.03);
   border: 2px solid var(--cell-border-color, rgba(255, 255, 255, 0.06));
+}
+
+.cell-card.show-controls {
+  z-index: 20;
 }
 
 .cell-preview {
   position: relative;
   width: 100%;
   aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 10px;
   background: linear-gradient(180deg, rgba(17, 23, 34, 0.9), rgba(13, 17, 24, 0.95));
   background-position: center;
   background-repeat: no-repeat;
@@ -599,14 +606,24 @@ textarea {
 }
 
 .cell-controls {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  z-index: 30;
   display: none;
   gap: 0.6rem;
-  padding: 0 0.6rem 0.8rem;
+  min-width: 18rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: #151d28;
+  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.42);
 }
 
 .cell-card.show-controls .cell-controls,
 .cell-card.show-controls .cell-info {
-  display: block;
+  display: grid;
 }
 
 .file-group input {
