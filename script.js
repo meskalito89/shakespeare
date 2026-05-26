@@ -167,7 +167,29 @@ function updateSceneTabs() {
     const tab = document.createElement('button');
     tab.type = 'button';
     tab.className = 'scene-tab' + (scene.id === state.activeSceneId ? ' active' : '');
-    tab.textContent = scene.name;
+    const name = document.createElement('span');
+    name.className = 'scene-tab-name';
+    name.textContent = scene.name;
+
+    const closeBtn = document.createElement('span');
+    closeBtn.className = 'scene-tab-close';
+    closeBtn.textContent = 'x';
+    closeBtn.title = `Delete ${scene.name}`;
+    closeBtn.setAttribute('role', 'button');
+    closeBtn.setAttribute('tabindex', '0');
+    closeBtn.setAttribute('aria-label', `Delete ${scene.name}`);
+    closeBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      deleteScene(scene.id);
+    });
+    closeBtn.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      event.stopPropagation();
+      deleteScene(scene.id);
+    });
+
+    tab.append(name, closeBtn);
     tab.addEventListener('click', () => setActiveScene(scene.id));
     sceneTabs.appendChild(tab);
   });
@@ -610,6 +632,30 @@ function addScene() {
   const scene = createScene(`Scene ${state.scenes.length + 1}`, 'Describe this scene.');
   state.scenes.push(scene);
   setActiveScene(scene.id);
+}
+
+function deleteScene(sceneId) {
+  const sceneIndex = state.scenes.findIndex(scene => scene.id === sceneId);
+  if (sceneIndex === -1) return;
+
+  const [removedScene] = state.scenes.splice(sceneIndex, 1);
+  removedScene.cells.forEach(cell => {
+    if (!cell) return;
+    stopPlayer(cell.id);
+    audioPlayers.delete(cell.id);
+  });
+
+  if (state.activeSceneId === sceneId) {
+    const nextScene = state.scenes[sceneIndex] || state.scenes[sceneIndex - 1] || null;
+    state.activeSceneId = nextScene ? nextScene.id : null;
+  }
+
+  if (state.scenes.length === 0) {
+    addScene();
+    return;
+  }
+
+  renderScene();
 }
 
 function addCell(index = null) {
