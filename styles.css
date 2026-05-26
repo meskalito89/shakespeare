@@ -394,14 +394,19 @@ textarea {
 /* Toggle config button in overlay */
 .toggle-config {
   position: absolute;
-  right: 8px;
   top: 8px;
+  left: 8px;
+  display: grid;
+  place-items: center;
   border: none;
   width: 36px;
   height: 36px;
-  border-radius: 8px;
+  padding: 0;
+  border-radius: 50%;
   background: rgba(0,0,0,0.45);
   color: #fff;
+  font-size: 1.05rem;
+  line-height: 1;
   cursor: pointer;
 }
 
@@ -442,7 +447,7 @@ textarea {
 .cell-volume-control {
   position: absolute;
   top: 8px;
-  right: 52px;
+  right: 8px;
   bottom: 3.95rem;
   z-index: 2;
   display: grid;
@@ -507,13 +512,17 @@ textarea {
 }
 
 .play-button {
+  display: grid;
+  place-items: center;
   border: none;
   width: 3rem;
   height: 3rem;
+  padding: 0;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
   font-size: 1.25rem;
+  line-height: 1;
 }
 
 .audio-progress-control {
