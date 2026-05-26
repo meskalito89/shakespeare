@@ -55,6 +55,51 @@ function createCell() {
   };
 }
 
+function getDroppedFiles(event) {
+  return Array.from(event.dataTransfer?.files || []);
+}
+
+function isImageFile(file) {
+  return file.type.startsWith('image/')
+    || /\.(avif|gif|jpe?g|png|svg|webp)$/i.test(file.name || '');
+}
+
+function isAudioFile(file) {
+  return file.type.startsWith('audio/')
+    || /\.(aac|flac|m4a|mp3|ogg|opus|wav|weba)$/i.test(file.name || '');
+}
+
+function hasAssetFiles(files) {
+  return files.some(file => isImageFile(file) || isAudioFile(file));
+}
+
+function hasDraggedFiles(event) {
+  return Array.from(event.dataTransfer?.items || []).some(item => item.kind === 'file')
+    || getDroppedFiles(event).length > 0;
+}
+
+async function applyAssetFilesToCell(cell, files, callbacks = {}) {
+  let changed = false;
+
+  for (const file of files) {
+    if (isImageFile(file)) {
+      const dataUrl = await readFileAsDataURL(file);
+      cell.imageSource = dataUrl;
+      cell.imageName = file.name || '';
+      callbacks.onImage?.();
+      changed = true;
+    } else if (isAudioFile(file)) {
+      const dataUrl = await readFileAsDataURL(file);
+      cell.audioSource = dataUrl;
+      cell.audioName = file.name || '';
+      callbacks.onAudio?.(dataUrl);
+      changed = true;
+    }
+  }
+
+  return changed;
+}
+
 function getActiveScene() {
   return state.scenes.find(scene => scene.id === state.activeSceneId);
 }
@@ -227,9 +272,26 @@ function renderScene() {
         addCell(i);
       });
 
-      slot.addEventListener('dragover', (ev) => ev.preventDefault());
-      slot.addEventListener('drop', (ev) => {
+      slot.addEventListener('dragover', (ev) => {
         ev.preventDefault();
+        if (hasDraggedFiles(ev)) slot.classList.add('cell-drop-target');
+      });
+      slot.addEventListener('dragleave', () => {
+        slot.classList.remove('cell-drop-target');
+      });
+      slot.addEventListener('drop', async (ev) => {
+        ev.preventDefault();
+        slot.classList.remove('cell-drop-target');
+        const files = getDroppedFiles(ev);
+        if (hasAssetFiles(files)) {
+          const nextCell = createCell();
+          const changed = await applyAssetFilesToCell(nextCell, files);
+          if (!changed) return;
+          scene.cells[i] = nextCell;
+          renderScene();
+          return;
+        }
+
         const src = parseInt(ev.dataTransfer.getData('text/plain'), 10);
         const dest = i;
         if (isNaN(src)) return;
@@ -420,9 +482,33 @@ function renderScene() {
       }
       ev.dataTransfer.setData('text/plain', i.toString());
     });
-    node.addEventListener('dragover', (ev) => ev.preventDefault());
-    node.addEventListener('drop', (ev) => {
+    node.addEventListener('dragover', (ev) => {
       ev.preventDefault();
+      if (hasDraggedFiles(ev)) node.classList.add('cell-drop-target');
+    });
+    node.addEventListener('dragleave', () => {
+      node.classList.remove('cell-drop-target');
+    });
+    node.addEventListener('drop', async (ev) => {
+      ev.preventDefault();
+      node.classList.remove('cell-drop-target');
+      const files = getDroppedFiles(ev);
+      if (hasAssetFiles(files)) {
+        const changed = await applyAssetFilesToCell(cell, files, {
+          onImage: () => {
+            imageUrlInput.value = '';
+            updateBackground();
+          },
+          onAudio: (source) => {
+            audioUrlInput.value = '';
+            syncAudioSrc(source);
+            playButton.textContent = '▶';
+          },
+        });
+        if (changed) updateAudioProgress(player);
+        return;
+      }
+
       const src = parseInt(ev.dataTransfer.getData('text/plain'), 10);
       const dest = i;
       if (isNaN(src) || src === dest) return;

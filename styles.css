@@ -370,6 +370,12 @@ textarea {
   aspect-ratio: 1 / 1;
 }
 
+.cell-empty.cell-drop-target,
+.cell-card.cell-drop-target {
+  border-color: rgba(79, 123, 255, 0.9);
+  box-shadow: 0 0 0 3px rgba(79, 123, 255, 0.24);
+}
+
 .cell-empty .primary {
   width: 48px;
   height: 48px;
