@@ -24,6 +24,7 @@ const state = {
 };
 
 const audioPlayers = new Map();
+const borderColors = ['#4f7bff', '#f97316', '#22c55e', '#eab308', '#ec4899', '#f8fafc'];
 
 function generateId() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
@@ -570,13 +571,36 @@ function renderScene() {
     });
 
     // border color control
-    const borderColorInput = node.querySelector('.border-color');
-    if (borderColorInput) {
-      borderColorInput.value = cell.borderColor || '#4f7bff';
-      borderColorInput.addEventListener('input', () => {
-        cell.borderColor = borderColorInput.value;
-        node.style.setProperty('--cell-border-color', cell.borderColor || 'transparent');
+    const borderColorSwatches = node.querySelector('.border-color-swatches');
+    if (borderColorSwatches) {
+      if (!borderColors.includes(cell.borderColor)) {
+        cell.borderColor = borderColors[0];
+      }
+
+      const updateSelectedBorderColor = () => {
+        borderColorSwatches.querySelectorAll('.border-color-swatch').forEach((swatch) => {
+          const isSelected = swatch.dataset.color === cell.borderColor;
+          swatch.classList.toggle('selected', isSelected);
+          swatch.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+        });
+      };
+
+      borderColors.forEach((color) => {
+        const swatch = document.createElement('button');
+        swatch.type = 'button';
+        swatch.className = 'border-color-swatch';
+        swatch.dataset.color = color;
+        swatch.style.setProperty('--swatch-color', color);
+        swatch.setAttribute('aria-label', `Use border color ${color}`);
+        swatch.addEventListener('click', () => {
+          cell.borderColor = color;
+          node.style.setProperty('--cell-border-color', color);
+          updateSelectedBorderColor();
+        });
+        borderColorSwatches.appendChild(swatch);
       });
+
+      updateSelectedBorderColor();
     }
 
     secondClickSelect.value = cell.secondClickAction;
