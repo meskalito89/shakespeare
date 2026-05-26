@@ -154,12 +154,95 @@ function stopPlayer(cellId) {
   updatePlayerButton(player, false);
 }
 
+function fadeOutPlayer(player, cell) {
+  if (!player || player.audio.paused) return;
+  clearFade(player);
+  const fadeDuration = 700;
+  const steps = 14;
+  const stepTime = fadeDuration / steps;
+  let currentStep = 0;
+  const volumeStart = player.audio.volume;
+
+  player.fadeTimer = setInterval(() => {
+    currentStep += 1;
+    const nextVolume = Math.max(0, volumeStart * (1 - currentStep / steps));
+    player.audio.volume = nextVolume;
+    if (currentStep >= steps) {
+      clearFade(player);
+      player.audio.pause();
+      player.audio.currentTime = 0;
+      player.audio.volume = normalizeVolume(cell.volume);
+      updatePlayerButton(player, false);
+    }
+  }, stepTime);
+}
+
 function stopAllPlayers() {
   audioPlayers.forEach((player) => {
     clearFade(player);
     player.audio.pause();
     player.audio.currentTime = 0;
     updatePlayerButton(player, false);
+  });
+}
+
+function playCellAudio(cell) {
+  if (!cell?.audioSource) return;
+  cell.volume = normalizeVolume(cell.volume);
+  const player = audioPlayers.get(cell.id) || getAudioPlayer(cell, null);
+  clearFade(player);
+  syncPlayerSource(player, cell.audioSource);
+  player.audio.currentTime = 0;
+  player.audio.volume = cell.volume;
+  player.audio.loop = Boolean(cell.loopAudio);
+  player.audio.play()
+    .then(() => updatePlayerButton(player, true))
+    .catch(() => updatePlayerButton(player, false));
+}
+
+function applyCellSecondClickAction(cell) {
+  if (!cell?.audioSource) return;
+  const player = audioPlayers.get(cell.id);
+  if (!player || player.audio.paused) return;
+
+  if (cell.secondClickAction === 'pause') {
+    clearFade(player);
+    player.audio.pause();
+    updatePlayerButton(player, false);
+  } else if (cell.secondClickAction === 'stop') {
+    stopPlayer(cell.id);
+  } else {
+    fadeOutPlayer(player, cell);
+  }
+}
+
+function getBoardLineCells(scene, lineType, index) {
+  const cells = [];
+  for (let i = 0; i < 10; i++) {
+    const cellIndex = lineType === 'row'
+      ? index * 10 + i
+      : i * 10 + index;
+    cells.push(scene.cells[cellIndex]);
+  }
+  return cells;
+}
+
+function playBoardLine(lineType, index) {
+  const scene = getActiveScene();
+  if (!scene) return;
+  const lineCells = getBoardLineCells(scene, lineType, index);
+  const hasPlayingAudio = lineCells.some((cell) => {
+    if (!cell) return false;
+    const player = audioPlayers.get(cell.id);
+    return player && !player.audio.paused;
+  });
+
+  lineCells.forEach((cell) => {
+    if (hasPlayingAudio) {
+      applyCellSecondClickAction(cell);
+    } else {
+      playCellAudio(cell);
+    }
   });
 }
 
@@ -255,7 +338,34 @@ function renderScene() {
   sceneDescriptionInput.value = scene.description;
   cellsContainer.innerHTML = '';
 
+  const corner = document.createElement('div');
+  corner.className = 'grid-play-corner';
+  cellsContainer.appendChild(corner);
+
+  for (let column = 0; column < 10; column++) {
+    const columnButton = document.createElement('button');
+    columnButton.type = 'button';
+    columnButton.className = 'grid-play-button column-play-button';
+    columnButton.textContent = '▶';
+    columnButton.title = `Play column ${column + 1}`;
+    columnButton.setAttribute('aria-label', `Play column ${column + 1}`);
+    columnButton.addEventListener('click', () => playBoardLine('column', column));
+    cellsContainer.appendChild(columnButton);
+  }
+
   for (let i = 0; i < 100; i++) {
+    if (i % 10 === 0) {
+      const row = i / 10;
+      const rowButton = document.createElement('button');
+      rowButton.type = 'button';
+      rowButton.className = 'grid-play-button row-play-button';
+      rowButton.textContent = '▶';
+      rowButton.title = `Play row ${row + 1}`;
+      rowButton.setAttribute('aria-label', `Play row ${row + 1}`);
+      rowButton.addEventListener('click', () => playBoardLine('row', row));
+      cellsContainer.appendChild(rowButton);
+    }
+
     const cell = scene.cells[i];
     if (!cell) {
       const slot = document.createElement('div');
@@ -381,50 +491,10 @@ function renderScene() {
         return;
       }
       if (audio.paused) {
-        clearFade(player);
-        audio.volume = cell.volume;
-        audio.play()
-          .then(() => updatePlayerButton(player, true))
-          .catch(() => updatePlayerButton(player, false));
+        playCellAudio(cell);
       } else {
-        applySecondClickAction();
+        applyCellSecondClickAction(cell);
       }
-    }
-
-    function applySecondClickAction() {
-      if (!audio.src) return;
-      const action = cell.secondClickAction;
-      if (action === 'pause') {
-        clearFade(player);
-        audio.pause();
-        updatePlayerButton(player, false);
-      } else if (action === 'stop') {
-        stopPlayer(cell.id);
-      } else {
-        fadeOutAudio();
-      }
-    }
-
-    function fadeOutAudio() {
-      if (audio.paused) return;
-      clearFade(player);
-      const fadeDuration = 700;
-      const steps = 14;
-      const stepTime = fadeDuration / steps;
-      let currentStep = 0;
-      const volumeStart = audio.volume;
-      player.fadeTimer = setInterval(() => {
-        currentStep += 1;
-        const nextVolume = Math.max(0, volumeStart * (1 - currentStep / steps));
-        audio.volume = nextVolume;
-        if (currentStep >= steps) {
-          clearFade(player);
-          audio.pause();
-          audio.currentTime = 0;
-          audio.volume = cell.volume;
-          updatePlayerButton(player, false);
-        }
-      }, stepTime);
     }
 
     if (volumeControl && volumeInput) {

@@ -330,30 +330,46 @@ textarea {
   transform: translate(0.12rem, -0.12rem);
 }
 
-/* Compact chessboard-style grid: default 10x10 */
+.scene-body {
+  overflow-x: auto;
+}
+
+/* Compact chessboard-style grid: 10x10 with row and column play controls */
 .cell-grid {
   display: grid;
-  grid-template-columns: repeat(10, minmax(100px, 1fr));
+  grid-template-columns: 2rem repeat(10, minmax(100px, 1fr));
   gap: 0.5rem;
   align-items: start;
+  min-width: calc(1000px + 7rem);
 }
 
-@media (max-width: 1280px) {
-  .cell-grid {
-    grid-template-columns: repeat(8, minmax(100px, 1fr));
-  }
+.grid-play-corner {
+  width: 2rem;
+  height: 2rem;
 }
 
-@media (max-width: 980px) {
-  .cell-grid {
-    grid-template-columns: repeat(4, minmax(100px, 1fr));
-  }
+.grid-play-button {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  min-width: 2rem;
+  padding: 0;
+  border-radius: 8px;
+  background: rgba(79, 123, 255, 0.82);
+  color: #fff;
+  font-size: 0.78rem;
+  line-height: 1;
 }
 
-@media (max-width: 680px) {
-  .cell-grid {
-    grid-template-columns: repeat(2, minmax(100px, 1fr));
-  }
+.column-play-button {
+  justify-self: center;
+  align-self: end;
+}
+
+.row-play-button {
+  justify-self: end;
+  align-self: center;
 }
 
 /* Compact cell appearance */
