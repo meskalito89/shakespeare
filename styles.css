@@ -259,6 +259,61 @@ textarea {
   resize: vertical;
 }
 
+.asset-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2.8rem;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.asset-input-row input[type="url"] {
+  min-width: 0;
+}
+
+.icon-file-button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 2.8rem;
+  min-height: 2.8rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.09);
+  color: #eff5ff;
+  cursor: pointer;
+  overflow: hidden;
+  transition: background 0.2s ease;
+}
+
+.icon-file-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.icon-file-button input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.icon-file-button span {
+  display: grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2px solid currentColor;
+  border-radius: 3px;
+  font-size: 0;
+}
+
+.icon-file-button span::before {
+  content: "";
+  width: 0.38rem;
+  height: 0.38rem;
+  border-top: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  transform: translate(0.12rem, -0.12rem);
+}
+
 /* Compact chessboard-style grid: default 10x10 */
 .cell-grid {
   display: grid;

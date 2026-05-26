@@ -66,24 +66,28 @@
       </div>
       <div class="cell-controls">
         <div class="field-group">
-          <label>Image URL</label>
-          <input class="image-url" type="url" placeholder="https://example.com/image.jpg" />
-        </div>
-        <div class="field-group file-group">
-          <label>Upload Image</label>
-          <input class="image-file" type="file" accept="image/*" />
+          <label>Image</label>
+          <div class="asset-input-row">
+            <input class="image-url" type="url" placeholder="https://example.com/image.jpg" />
+            <label class="icon-file-button" title="Upload image">
+              <span aria-hidden="true"></span>
+              <input class="image-file" type="file" accept="image/*" />
+            </label>
+          </div>
         </div>
         <div class="field-group">
           <label>Cell description</label>
           <textarea class="cell-description" placeholder="Cell description"></textarea>
         </div>
         <div class="field-group">
-          <label>Audio URL</label>
-          <input class="audio-url" type="url" placeholder="https://example.com/audio.mp3" />
-        </div>
-        <div class="field-group file-group">
-          <label>Upload Audio</label>
-          <input class="audio-file" type="file" accept="audio/*" />
+          <label>Audio</label>
+          <div class="asset-input-row">
+            <input class="audio-url" type="url" placeholder="https://example.com/audio.mp3" />
+            <label class="icon-file-button" title="Upload audio">
+              <span aria-hidden="true"></span>
+              <input class="audio-file" type="file" accept="audio/*" />
+            </label>
+          </div>
         </div>
         <div class="field-group">
           <label>Second click action</label>
