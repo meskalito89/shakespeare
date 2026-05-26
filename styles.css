@@ -255,6 +255,22 @@ select {
   padding: 0.8rem 1rem;
 }
 
+select {
+  color-scheme: dark;
+  background-color: #17202b;
+  color: #f5f9ff;
+}
+
+select option {
+  background-color: #17202b;
+  color: #f5f9ff;
+}
+
+select option:checked {
+  background-color: #4f7bff;
+  color: #fff;
+}
+
 textarea {
   resize: vertical;
 }
